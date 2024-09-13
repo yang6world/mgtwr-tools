@@ -1,13 +1,17 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QFileDialog, QListWidget, QListWidgetItem,
+                             QComboBox, QLineEdit, QPushButton, QHBoxLayout, QMessageBox, QGridLayout)
 
 from views.components.button import ModernButton
+import pandas as pd
+from utils.data_analysis import DataAnalysis
 
 
 class MGRWRAnalysisPage(QWidget):
     def __init__(self, console_output):
         super().__init__()
         self.console_output = console_output
+        self.analysis = None
         self.initUI()
 
     def initUI(self):
@@ -24,14 +28,234 @@ class MGRWRAnalysisPage(QWidget):
         """)
         layout.addWidget(title_label)
 
+        # 文件导入
+        import_button = ModernButton("导入 Excel 文件")
+        import_button.clicked.connect(self.import_file)
+        layout.addWidget(import_button)
+
+        self.file_label = QLabel("未选择文件")
+        layout.addWidget(self.file_label)
+
+        # 变量选择
+        grid_layout = QGridLayout()
+        y_label = QLabel("选择因变量")
+        grid_layout.addWidget(y_label, 0, 0)
+
+        self.y_combo = QComboBox()
+        grid_layout.addWidget(self.y_combo, 0, 1)
+
+        x_label = QLabel("选择自变量 (多选)")
+        grid_layout.addWidget(x_label, 1, 0)
+
+        self.x_list = QListWidget()
+        self.x_list.setSelectionMode(QListWidget.MultiSelection)
+        grid_layout.addWidget(self.x_list, 1, 1)
+
+        coords_label = QLabel("选择经纬度列 (多选)")
+        grid_layout.addWidget(coords_label, 2, 0)
+
+        self.coords_list = QListWidget()
+        self.coords_list.setSelectionMode(QListWidget.MultiSelection)
+        grid_layout.addWidget(self.coords_list, 2, 1)
+
+        time_label = QLabel("选择时间列")
+        grid_layout.addWidget(time_label, 3, 0)
+
+        self.time_combo = QComboBox()
+        grid_layout.addWidget(self.time_combo, 3, 1)
+
+        layout.addLayout(grid_layout)
+
+        # 模型和核函数
+        model_kernel_layout = QHBoxLayout()
+
+        model_label = QLabel("选择模型")
+        model_kernel_layout.addWidget(model_label)
+
+        self.model_combo = QComboBox()
+        self.model_combo.addItems(['GTWR', 'MGTWR'])
+        self.model_combo.currentIndexChanged.connect(self.update_parameters)
+        model_kernel_layout.addWidget(self.model_combo)
+
+        kernel_label = QLabel("选择核函数")
+        model_kernel_layout.addWidget(kernel_label)
+
+        self.kernel_combo = QComboBox()
+        self.kernel_combo.addItems(['gaussian', 'bisquare', 'exponential'])
+        model_kernel_layout.addWidget(self.kernel_combo)
+
+        layout.addLayout(model_kernel_layout)
+
+        # 固定带宽和带宽准则
+        fixed_criterion_layout = QHBoxLayout()
+
+        fixed_label = QLabel("固定带宽")
+        fixed_criterion_layout.addWidget(fixed_label)
+
+        self.fixed_combo = QComboBox()
+        self.fixed_combo.addItems(['True', 'False'])
+        fixed_criterion_layout.addWidget(self.fixed_combo)
+
+        criterion_label = QLabel("带宽准则")
+        fixed_criterion_layout.addWidget(criterion_label)
+
+        self.criterion_combo = QComboBox()
+        self.criterion_combo.addItems(['AICc', 'AIC', 'BIC', 'CV'])
+        fixed_criterion_layout.addWidget(self.criterion_combo)
+
+        layout.addLayout(fixed_criterion_layout)
+
+        # 动态参数区域
+        self.param_layout = QVBoxLayout()
+        layout.addLayout(self.param_layout)
+
+        # 开始分析按钮
         analyze_button = ModernButton("开始分析")
         analyze_button.clicked.connect(self.start_analysis)
         layout.addWidget(analyze_button)
 
+    def import_file(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择 Excel 文件", "", "Excel 文件 (*.xlsx)")
+        if file_path:
+            self.analysis = DataAnalysis(file_path)
+            self.file_label.setText(f"已选择文件: {file_path}")
+            self.console_output.append(f"已选择文件: {file_path}")
+            self.populate_headers()
+        else:
+            self.console_output.append("未选择文件")
+
+    def populate_headers(self):
+        headers = self.analysis.get_headers()
+        self.y_combo.clear()
+        self.x_list.clear()
+        self.coords_list.clear()
+        self.time_combo.clear()
+
+        self.y_combo.addItems(headers)
+        for header in headers:
+            self.x_list.addItem(QListWidgetItem(header))
+            self.coords_list.addItem(QListWidgetItem(header))
+        self.time_combo.addItems(headers)
+
+    def update_parameters(self):
+        # 清空动态参数区
+        for i in reversed(range(self.param_layout.count())):
+            self.param_layout.itemAt(i).widget().deleteLater()
+
+        model = self.model_combo.currentText()
+
+        if model == 'GTWR':
+            # GTWR 参数
+            bw_min_label = QLabel("带宽最小值")
+            bw_min_input = QLineEdit()
+            self.param_layout.addWidget(bw_min_label)
+            self.param_layout.addWidget(bw_min_input)
+
+            bw_max_label = QLabel("带宽最大值")
+            bw_max_input = QLineEdit()
+            self.param_layout.addWidget(bw_max_label)
+            self.param_layout.addWidget(bw_max_input)
+
+            tau_min_label = QLabel("时空尺度最小值")
+            tau_min_input = QLineEdit()
+            self.param_layout.addWidget(tau_min_label)
+            self.param_layout.addWidget(tau_min_input)
+
+            tau_max_label = QLabel("时空尺度最大值")
+            tau_max_input = QLineEdit()
+            self.param_layout.addWidget(tau_max_label)
+            self.param_layout.addWidget(tau_max_input)
+
+            self.dynamic_inputs = {
+                'bw_min': bw_min_input,
+                'bw_max': bw_max_input,
+                'tau_min': tau_min_input,
+                'tau_max': tau_max_input
+            }
+
+        elif model == 'MGTWR':
+            # MGTWR 参数
+            multi_bw_min_label = QLabel("多带宽最小值")
+            multi_bw_min_input = QLineEdit()
+            self.param_layout.addWidget(multi_bw_min_label)
+            self.param_layout.addWidget(multi_bw_min_input)
+
+            multi_bw_max_label = QLabel("多带宽最大值")
+            multi_bw_max_input = QLineEdit()
+            self.param_layout.addWidget(multi_bw_max_label)
+            self.param_layout.addWidget(multi_bw_max_input)
+
+            multi_tau_min_label = QLabel("多时空尺度最小值")
+            multi_tau_min_input = QLineEdit()
+            self.param_layout.addWidget(multi_tau_min_label)
+            self.param_layout.addWidget(multi_tau_min_input)
+
+            multi_tau_max_label = QLabel("多时空尺度最大值")
+            multi_tau_max_input = QLineEdit()
+            self.param_layout.addWidget(multi_tau_max_label)
+            self.param_layout.addWidget(multi_tau_max_input)
+
+            self.dynamic_inputs = {
+                'multi_bw_min': multi_bw_min_input,
+                'multi_bw_max': multi_bw_max_input,
+                'multi_tau_min': multi_tau_min_input,
+                'multi_tau_max': multi_tau_max_input
+            }
+
     def start_analysis(self):
-        # 这里添加 MGRWR 分析的逻辑
-        self.console_output.append("开始 MGRWR 分析...")
-        # 模拟分析过程
-        for i in range(5):
-            self.console_output.append(f"分析步骤 {i + 1}/5")
-        self.console_output.append("MGRWR 分析完成！")
+        if self.analysis is None:
+            self.console_output.append("请先导入 Excel 文件")
+            return
+
+        # 获取用户选择的变量
+        y_var = self.y_combo.currentText()
+        x_vars = [item.text() for item in self.x_list.selectedItems()]
+        coords = [item.text() for item in self.coords_list.selectedItems()]
+        t_var = self.time_combo.currentText()
+
+        if not y_var or not x_vars or not coords or not t_var:
+            self.console_output.append("请完整选择自变量、因变量、时间和经纬度列")
+            return
+
+        self.analysis.set_variables(x_vars, [y_var], [t_var], coords)
+
+        # 获取用户选择的核函数、固定带宽和准则
+        kernel = self.kernel_combo.currentText()
+        fixed = self.fixed_combo.currentText() == 'True'
+        criterion = self.criterion_combo.currentText()
+
+        # 获取动态参数输入
+        model = self.model_combo.currentText()
+
+        try:
+            if model == 'GTWR':
+                bw_min = self.get_input_value(self.dynamic_inputs['bw_min'])
+                bw_max = self.get_input_value(self.dynamic_inputs['bw_max'])
+                tau_min = self.get_input_value(self.dynamic_inputs['tau_min'])
+                tau_max = self.get_input_value(self.dynamic_inputs['tau_max'])
+                self.analysis.gtwr(kernel=kernel, fixed=fixed, criterion=criterion,
+                                   bw_min=bw_min, bw_max=bw_max, tau_min=tau_min, tau_max=tau_max)
+            elif model == 'MGTWR':
+                multi_bw_min = self.get_input_value(self.dynamic_inputs['multi_bw_min'])
+                multi_bw_max = self.get_input_value(self.dynamic_inputs['multi_bw_max'])
+                multi_tau_min = self.get_input_value(self.dynamic_inputs['multi_tau_min'])
+                self.get_input_value(self.dynamic_inputs['multi_tau_min'])
+                multi_tau_max = self.get_input_value(self.dynamic_inputs['multi_tau_max'])
+
+                self.analysis.mgtwr(kernel=kernel, fixed=fixed, criterion=criterion,
+                                    multi_bw_min=[multi_bw_min], multi_bw_max=[multi_bw_max],
+                                    multi_tau_min=[multi_tau_min], multi_tau_max=[multi_tau_max])
+
+            self.console_output.append(f"{model} 分析完成！")
+        except Exception as e:
+            self.console_output.append(f"分析时发生错误: {e}")
+
+    def get_input_value(self, input_field):
+        """获取用户输入的数值，如果为空则返回 None"""
+        try:
+            value = input_field.text().strip()
+            return float(value) if value else None
+        except ValueError:
+            self.console_output.append(f"输入无效: {input_field.text()}")
+            return None
+

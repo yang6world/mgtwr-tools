@@ -10,6 +10,7 @@ from views.components.console import ConsoleOutput
 from views.pages.MGTWR_analysis import MGRWRAnalysisPage
 from views.pages.data_crawling import DirectorySelector
 from views.pages.data_preparation import DataGenerationPage
+from views.pages.task_manager import TaskManager
 
 
 class MainWindow(QMainWindow):
@@ -32,10 +33,13 @@ class MainWindow(QMainWindow):
         self.data_gen_button = ModernButton("数据生成")
         self.dir_select_button = ModernButton("目录选择")
         self.mgrwr_button = ModernButton("MGRWR 分析")
+        self.task_manager_button = ModernButton("任务管理")
 
         button_layout.addWidget(self.data_gen_button)
         button_layout.addWidget(self.dir_select_button)
         button_layout.addWidget(self.mgrwr_button)
+        button_layout.addWidget(self.task_manager_button)
+
 
         main_layout.addLayout(button_layout)
 
@@ -46,14 +50,18 @@ class MainWindow(QMainWindow):
         self.console_output = ConsoleOutput()
 
         # 创建三个页面
+        self.task_manager = TaskManager()
         self.data_gen_page = DataGenerationPage(self.console_output)
-        self.dir_select_page = DirectorySelector(self.console_output)
+        self.dir_select_page = DirectorySelector(self.console_output, self.task_manager)
         self.mgrwr_page = MGRWRAnalysisPage(self.console_output)
+        # 任务管理页面
+
 
         # 将页面添加到堆叠窗口部件
         self.stack.addWidget(self.data_gen_page)
         self.stack.addWidget(self.dir_select_page)
         self.stack.addWidget(self.mgrwr_page)
+        self.stack.addWidget(self.task_manager)
 
         # 创建分割器
         splitter = QSplitter(Qt.Vertical)
@@ -67,6 +75,7 @@ class MainWindow(QMainWindow):
         self.data_gen_button.clicked.connect(lambda: self.stack.setCurrentIndex(0))
         self.dir_select_button.clicked.connect(lambda: self.stack.setCurrentIndex(1))
         self.mgrwr_button.clicked.connect(lambda: self.stack.setCurrentIndex(2))
+        self.task_manager_button.clicked.connect(lambda: self.stack.setCurrentIndex(3))
         # 重定向 stdout 和 stderr
         sys.stdout = self.console_output
         sys.stderr = self.console_output

@@ -81,6 +81,7 @@ def get_data_pre(data_id, excel_path):
     combined_df = pd.DataFrame() 
     wds = get_province_valuecode()
     for wd in wds:
+        print(f"正在获取{wd['valuecode']}的数据...")
         province_code = wd['valuecode']  # Province code
         data = fetch_data(json.dumps([wd]), json.dumps([{"wdcode":"zb","valuecode":data_id},{"wdcode":"sj","valuecode":"LAST20"}]))  # 查询年份参数: LAST5, LAST10, LAST20
         if data:

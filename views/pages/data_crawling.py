@@ -1,17 +1,19 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QFileDialog,
-                             QMessageBox, QScrollArea)
+                             QMessageBox, QScrollArea, QTableWidgetItem)
 from PyQt5.QtCore import Qt
 
-from utils.reptile import make_request
+from utils.reptile import make_request, get_data_pre
+from views.background_task.crawling import CrawlerThread
 from views.components.button import ModernButton
 from views.components.combobox import ModernComboBox
 
 
 class DirectorySelector(QWidget):
-    def __init__(self, console_output):
+    def __init__(self, console_output, task_manager):
         super().__init__()
         self.console_output = console_output
+        self.task_manager = task_manager
         self.index_history = []
         self.current_zb = None
         self.combo_boxes = []
@@ -167,6 +169,57 @@ class DirectorySelector(QWidget):
             self.result_label.clear()
             self.console_output.append("返回上一级")
 
+    def update_console_output(self, message):
+        # 这是用于更新 console_output 和 result_label 的槽
+        self.console_output.append(message)
+        self.result_label.setText(message)
+
+    def start_crawler_task(self, selected_id, filepath):
+        # 为任务分配唯一ID
+        task_id = len(self.task_manager.tasks) + 1
+
+        # 创建后台线程对象
+        self.crawler_thread = CrawlerThread(selected_id, filepath, task_id)
+
+        # 连接信号与槽
+        self.crawler_thread.progress_signal.connect(self.update_console_output)
+        self.crawler_thread.finished_signal.connect(self.on_crawler_finished)
+        self.crawler_thread.error_signal.connect(self.on_crawler_error)
+
+        # 启动线程
+        self.crawler_thread.start()
+
+        # 将任务添加到任务管理器页面
+        self.task_manager.add_task(task_id, self.crawler_thread, '线程')
+
+        # # 打开任务管理器页面（如果未打开）
+        # if not self.task_manager.isVisible():
+        #     self.task_manager.show()
+
+    def on_crawler_finished(self, message):
+        # 当爬虫任务完成时，更新 UI 显示任务完成消息
+        self.console_output.append(message)
+        self.result_label.setText(message)
+
+        # 获取 task_manager 中的任务表
+        task_id = int(message.split("任务ID: ")[-1])
+        task_table = self.task_manager.task_table
+        for i in range(task_table.rowCount()):
+            if int(task_table.item(i, 0).text()) == task_id:
+                task_table.setItem(i, 1, QTableWidgetItem("已完成"))
+
+    def on_crawler_error(self, error_message):
+        # 当爬虫任务出错时，更新 UI 显示任务出错消息
+        self.console_output.append(error_message)
+        self.result_label.setText(error_message)
+
+        # 获取 task_manager 中的任务表
+        task_id = int(error_message.split("任务ID: ")[-1])
+        task_table = self.task_manager.task_table
+        for i in range(task_table.rowCount()):
+            if int(task_table.item(i, 0).text()) == task_id:
+                task_table.setItem(i, 1, QTableWidgetItem("出错"))
+
     def select_directory(self):
         if self.combo_boxes:
             last_combo = self.combo_boxes[-1]
@@ -176,6 +229,11 @@ class DirectorySelector(QWidget):
                 selected_id = last_combo.itemData(selected_index)
                 self.result_label.setText(f"已选择: {selected_name} (ID: {selected_id})")
                 self.console_output.append(f"已选择: {selected_name} (ID: {selected_id})")
+
+                # 启动后台爬虫任务
+                self.result_label.setText("正在爬取数据，请稍等...")
+                self.console_output.append("正在爬取数据，请稍等...")
+                self.start_crawler_task(selected_id, self.filepath)
             else:
                 self.result_label.setText("请在最后一个下拉菜单中进行选择")
                 self.console_output.append("请在最后一个下拉菜单中进行选择")
