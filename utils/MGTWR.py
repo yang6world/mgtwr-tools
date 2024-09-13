@@ -15,7 +15,7 @@ bws = selector.search(multi_bw_min=[0.1], verbose=True, tol_multi=1.0e-4, time_c
 print("Selected bandwidths:", bws)
 # 拟合MGTWR模型
 mgtwr_model = MGTWR(coords, t, X, y, selector, kernel='gaussian', fixed=True)
-mgtwr_results = mgtwr_model.fit(n_jobs=200)
+mgtwr_results = mgtwr_model.fit()
 
 print("R-squared value:", mgtwr_results.R2)
 print("aic value:", mgtwr_results.aic)
