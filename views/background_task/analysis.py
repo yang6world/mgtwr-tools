@@ -10,11 +10,13 @@ class QueueWriter:
         self.queue = queue
 
     def write(self, message):
-        if message.strip():  # 避免传递空行
-            self.queue.put(message)
+        # 直接将 message 放入队列，保留换行符等特殊字符
+        self.queue.put(message)
 
     def flush(self):
-        pass  # 无需缓冲
+        """flush 方法可以留空或传递，因为 queue 本身是无缓冲的。"""
+        pass
+
 
 def analysis_process(file_path, y_var, x_vars, coords, t_var, kernel, fixed, criterion, model, params, queue):
     """
@@ -24,6 +26,7 @@ def analysis_process(file_path, y_var, x_vars, coords, t_var, kernel, fixed, cri
     try:
         # 重定向 sys.stdout 到队列
         sys.stdout = QueueWriter(queue)
+        sys.stderr = QueueWriter(queue)
         print(f"开始 {model} 分析...")
         # 模拟分析任务
         analysis = DataAnalysis(file_path)
@@ -39,9 +42,10 @@ def analysis_process(file_path, y_var, x_vars, coords, t_var, kernel, fixed, cri
                            multi_bw_min=[multi_bw_min], multi_bw_max=[multi_bw_max],
                            multi_tau_min=[multi_tau_min], multi_tau_max=[multi_tau_max])
 
-        queue.put(f"{model} 分析完成")
+        print(f"{model} 分析完成")
     except Exception as e:
-        queue.put(f"分析错误: {e}")
+        print(f"分析错误: {e}")
     finally:
         sys.stdout = sys.__stdout__  # 恢复标准输出
+        sys.stderr = sys.__stderr__
 

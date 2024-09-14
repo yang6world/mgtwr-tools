@@ -1,7 +1,7 @@
 import psutil
 from PyQt5.QtWidgets import QTableWidgetItem, QTableWidget, QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QMainWindow
 from PyQt5.QtCore import QTimer, QThread
-from multiprocessing import Process, Manager
+from multiprocessing import Process
 
 
 class TaskManager(QMainWindow):
@@ -58,7 +58,6 @@ class TaskManager(QMainWindow):
         """
         根据任务的类型，终止任务。
         """
-        # 获取选中的任务并终止它
         row = self.task_table.currentRow()
         if row == -1:
             return  # 没有选中任务
@@ -71,7 +70,7 @@ class TaskManager(QMainWindow):
             task_type = task_info['type']
 
             if task_type == "线程" and isinstance(task, QThread):
-                task.stop()  # 调用线程的停止方法
+                task.terminate()  # 调用线程的终止方法
                 self.task_table.setItem(row, 1, QTableWidgetItem("已终止"))
 
             elif task_type == "进程" and isinstance(task, Process):
@@ -79,29 +78,50 @@ class TaskManager(QMainWindow):
                 task.join()  # 等待进程终止
                 self.task_table.setItem(row, 1, QTableWidgetItem("已终止"))
 
+        # 删除任务
+        self.delete_task(task_id)
+
     def refresh_resources(self):
         """
-        刷新每个任务的资源使用情况
+        刷新每个任务的资源使用情况，并检查任务是否完成。
         """
         for task_id, task_info in self.tasks.items():
             task = task_info['task']
             task_type = task_info['type']
 
-            # 检查任务是进程并且任务仍在运行
-            if task_type == "进程" and isinstance(task, Process) and task.is_alive():
-                try:
-                    # 使用 psutil 获取该进程的资源占用情况
-                    process = psutil.Process(task.pid)  # 获取进程 ID
-                    cpu_usage = process.cpu_percent(interval=1) / psutil.cpu_count()
-                    memory_usage = process.memory_info().rss / (1024 * 1024)  # 转换为MB
+            if task_type == "进程" and isinstance(task, Process):
+                if task.is_alive():
+                    try:
+                        # 使用 psutil 获取该进程的资源占用情况
+                        process = psutil.Process(task.pid)  # 获取进程 ID
+                        cpu_usage = process.cpu_percent(interval=1) / psutil.cpu_count()
+                        memory_usage = process.memory_info().rss / (1024 * 1024)  # 转换为MB
 
-                    # 更新表格中任务的资源占用情况
-                    for i in range(self.task_table.rowCount()):
-                        if int(self.task_table.item(i, 0).text()) == task_id:
-                            self.task_table.setItem(i, 3, QTableWidgetItem(f"{cpu_usage:.2f}"))
-                            self.task_table.setItem(i, 4, QTableWidgetItem(f"{memory_usage:.2f}"))
-                except psutil.NoSuchProcess:
-                    continue
+                        # 更新表格中任务的资源占用情况
+                        for i in range(self.task_table.rowCount()):
+                            if int(self.task_table.item(i, 0).text()) == task_id:
+                                self.task_table.setItem(i, 3, QTableWidgetItem(f"{cpu_usage:.2f}"))
+                                self.task_table.setItem(i, 4, QTableWidgetItem(f"{memory_usage:.2f}"))
+                    except psutil.NoSuchProcess:
+                        continue
+                else:
+                    # 任务已完成
+                    self.task_completed(task_id)
+            elif task_type == "线程" and isinstance(task, QThread):
+                if not task.isRunning():
+                    # 任务已完成
+                    self.task_completed(task_id)
+
+    def task_completed(self, task_id):
+        """
+        当任务完成时，更新任务状态为“已完成”。
+        """
+        for i in range(self.task_table.rowCount()):
+            if int(self.task_table.item(i, 0).text()) == task_id:
+                self.task_table.setItem(i, 1, QTableWidgetItem("已完成"))
+
+        # 你可以选择是否立即删除任务
+        # self.delete_task(task_id)
 
     def delete_task(self, task_id):
         # 删除任务
