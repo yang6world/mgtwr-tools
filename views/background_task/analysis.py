@@ -19,7 +19,8 @@ class QueueWriter:
         pass
 
 
-def analysis_process(file_path, y_var, x_vars, coords, t_var, kernel, fixed, criterion, model, params, queue):
+def analysis_process(file_path, output_path, y_var, x_vars, coords, t_var, kernel, fixed, criterion, model, params,
+                     queue):
     """
     分析任务进程，实际执行分析并通过队列报告状态。
     queue: 用于传递子进程的状态和 print 输出
@@ -30,7 +31,7 @@ def analysis_process(file_path, y_var, x_vars, coords, t_var, kernel, fixed, cri
         sys.stderr = QueueWriter(queue)
         print(f"开始 {model} 分析...")
         # 模拟分析任务
-        analysis = DataAnalysis(file_path)
+        analysis = DataAnalysis(file_path, output_path)
         analysis.set_variables(x_vars, [y_var], [t_var], coords)
 
         if model == 'GTWR':
@@ -43,9 +44,9 @@ def analysis_process(file_path, y_var, x_vars, coords, t_var, kernel, fixed, cri
         elif model == 'MGTWR':
             bw_min_input, bw_max_input, tau_min_input, tau_max_input, multi_bw_min_input, multi_bw_max_input, multi_tau_min_input, multi_tau_max_input, tol_input, bw_decimal_input, tau_decimal_input, init_bw_input, init_tau_input, tol_multi_input, rss_score_input = \
                 params['bw_min'], params['bw_max'], params['tau_min'], params['tau_max'], params['multi_bw_min'], \
-                params['multi_bw_max'], params['multi_tau_min'], params['multi_tau_max'], params['tol'], params[
+                    params['multi_bw_max'], params['multi_tau_min'], params['multi_tau_max'], params['tol'], params[
                     'bw_decimal'], params['tau_decimal'], params['init_bw'], params['init_tau'], params['tol_multi'], \
-                params['rss_score']
+                    params['rss_score']
 
             analysis.mgtwr(kernel=kernel, fixed=fixed, criterion=criterion,
                            bw_min=bw_min_input, bw_max=bw_max_input, tau_min=tau_min_input, tau_max=tau_max_input,

@@ -13,9 +13,11 @@ from views.components.parameter_box import creat_gtwr_param_box, creat_mgtwr_par
 class MGRWRAnalysisPage(QWidget):
     def __init__(self, console_output, task_manager):
         super().__init__()
+        self.excel_data = None
         self.console_output = console_output
         self.task_manager = task_manager
-        self.analysis = None
+        self.input_file_path = None
+        self.output_file_path = None
         self.initUI()
 
     def initUI(self):
@@ -37,10 +39,22 @@ class MGRWRAnalysisPage(QWidget):
         # 文件导入
         import_button = ModernButton("导入 Excel 文件")
         import_button.clicked.connect(self.import_file)
-        layout.addWidget(import_button)
+
+        # 文件输出
+        output_button = ModernButton("导出 Excel 文件")
+        output_button.clicked.connect(self.output_file)
+
+        combined_layout = QHBoxLayout()
+        combined_layout.addWidget(import_button)
+        combined_layout.addWidget(output_button)
+
+        layout.addLayout(combined_layout)
 
         self.file_label = QLabel("未选择文件")
         layout.addWidget(self.file_label)
+
+        self.output_file_label = QLabel("未选择输出文件")
+        layout.addWidget(self.output_file_label)
 
         # 变量选择
         grid_layout = QGridLayout()
@@ -137,16 +151,26 @@ class MGRWRAnalysisPage(QWidget):
 
     def import_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "选择 Excel 文件", "", "Excel 文件 (*.xlsx)")
+        self.excel_data = pd.read_excel(file_path)
         if file_path:
-            self.analysis = DataAnalysis(file_path)
+            self.input_file_path = file_path
             self.file_label.setText(f"已选择文件: {file_path}")
             self.console_output.append(f"已选择文件: {file_path}")
             self.populate_headers()
         else:
             self.console_output.append("未选择文件")
 
+    def output_file(self):
+        file_path, _ = QFileDialog.getSaveFileName(self, "选择输出 Excel 文件", "", "Excel 文件 (*.xlsx)")
+        if file_path:
+            self.output_file_path = file_path
+            self.output_file_label.setText(f"已选择输出文件: {file_path}")
+            self.console_output.append(f"已选择输出文件: {file_path}")
+        else:
+            self.console_output.append("未选择输出文件")
+
     def populate_headers(self):
-        headers = self.analysis.get_headers()
+        headers = self.excel_data.columns.tolist()
         self.y_combo.clear()
         self.x_list.clear()
         self.coords_list.clear()
@@ -183,9 +207,15 @@ class MGRWRAnalysisPage(QWidget):
             self.dynamic_inputs = creat_mgtwr_param_box(self.param_layout)
 
     def start_analysis(self):
-        if self.analysis is None:
+        if self.input_file_path is None:
             self.console_output.append("请先导入 Excel 文件")
             return
+
+        if self.output_file_path is None:
+            self.console_output.append("请先选择输出文件")
+
+            return
+
 
         # 获取用户选择的变量
         y_var = self.y_combo.currentText()
@@ -233,14 +263,9 @@ class MGRWRAnalysisPage(QWidget):
                 params['tol_multi'] = self.get_input_value_float(self.dynamic_inputs['tol_multi'])
                 params['rss_score'] = self.get_input_value_float(self.dynamic_inputs['rss_score'])
 
-
-
-
-
-
             # 启动多进程分析任务
             analysis_process_args = (
-                self.analysis.file_path, y_var, x_vars, coords, t_var, kernel, fixed, criterion, model, params,
+                self.input_file_path,self.output_file_path, y_var, x_vars, coords, t_var, kernel, fixed, criterion, model, params,
                 self.output_queue
             )
             analysis_processes = Process(target=analysis_process, args=analysis_process_args)

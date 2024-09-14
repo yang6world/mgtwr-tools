@@ -7,9 +7,10 @@ from mgtwr.model import MGTWR
 
 
 class DataAnalysis:
-    def __init__(self, path):
-        self.file_path = path
-        self.excel_data = self.get_xlsx_data(path)
+    def __init__(self, input_path, output_path):
+        self.file_path = input_path
+        self.excel_data = self.get_xlsx_data(input_path)
+        self.output_path = output_path
         self.x = None
         self.y = None
         self.t = None
@@ -40,6 +41,10 @@ class DataAnalysis:
         self.y = self.excel_data[y]
         self.t = self.excel_data[t]
         self.coords = self.excel_data[coords]
+        print("自变量:", self.x)
+        print("因变量:", self.y)
+        print("时间变量:", self.t)
+        print("坐标变量:", self.coords)
 
     def gtwr(self, kernel: str,
              fixed: bool,
@@ -107,7 +112,8 @@ class DataAnalysis:
         print("模型自由度 (df_model) 值:", gtwr.df_model)
         print("sigma2值:", gtwr.sigma2)
         print("回归系数 (betas) 值:", gtwr.betas)
-        # 可视化
+        self.output_betas(gtwr.betas)
+
 
     def mgtwr(self, kernel: str,
               fixed: bool,
@@ -219,5 +225,24 @@ class DataAnalysis:
         print("模型自由度 (df_model) 值:", mgtwr_results.df_model)
         print("sigma2值:", mgtwr_results.sigma2)
         print("回归系数 (betas) 值:", mgtwr_results.betas)
+        self.output_betas(mgtwr_results.betas)
 
-    # 回归系数可视化
+    # 输出回归系数的xlsx
+    def output_betas(self, betas):
+        """
+        输出回归系数到xlsx文件，包含自变量名称，并将经纬度和年份信息也添加到表中。
+        :param betas: 回归系数矩阵
+        """
+        # 从 self.x 的列名中获取自变量名称
+        variable_names = ['Intercept'] + self.x.columns.tolist()
+        # 创建 DataFrame 并设置表头
+        df_betas = pd.DataFrame(betas, columns=variable_names)
+        # 添加经纬度和年份信息
+        df_betas['Longitude'] = self.coords.iloc[:, 1]  # 经度
+        df_betas['Latitude'] = self.coords.iloc[:, 0]  # 纬度
+        df_betas['Year'] = self.t  # 年份
+
+        # 输出到 Excel 文件
+        df_betas.to_excel(self.output_path, index=False)
+        print(f"回归系数表输出至 {self.output_path}")
+
