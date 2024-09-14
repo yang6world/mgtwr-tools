@@ -6,6 +6,7 @@ from utils.data_analysis import DataAnalysis
 
 class QueueWriter:
     """将子进程的 print 输出重定向到 multiprocessing.Queue 的类。"""
+
     def __init__(self, queue):
         self.queue = queue
 
@@ -33,11 +34,15 @@ def analysis_process(file_path, y_var, x_vars, coords, t_var, kernel, fixed, cri
         analysis.set_variables(x_vars, [y_var], [t_var], coords)
 
         if model == 'GTWR':
-            bw_min, bw_max, tau_min, tau_max = params['bw_min'], params['bw_max'], params['tau_min'], params['tau_max']
+            bw_min, bw_max, tau_min, tau_max, tol, bw_decimal, tau_decimal, max_iter = params['bw_min'], params[
+                'bw_max'], params['tau_min'], params['tau_max'], params['tol'], params['bw_decimal'], params[
+                'tau_decimal'], params['max_iter']
             analysis.gtwr(kernel=kernel, fixed=fixed, criterion=criterion,
-                          bw_min=bw_min, bw_max=bw_max, tau_min=tau_min, tau_max=tau_max)
+                          bw_min=bw_min, bw_max=bw_max, tau_min=tau_min, tau_max=tau_max, tol=tol,
+                          bw_decimal=bw_decimal, tau_decimal=tau_decimal, max_iter=max_iter)
         elif model == 'MGTWR':
-            multi_bw_min, multi_bw_max, multi_tau_min, multi_tau_max = params['multi_bw_min'], params['multi_bw_max'], params['multi_tau_min'], params['multi_tau_max']
+            multi_bw_min, multi_bw_max, multi_tau_min, multi_tau_max = params['multi_bw_min'], params['multi_bw_max'], \
+            params['multi_tau_min'], params['multi_tau_max']
             analysis.mgtwr(kernel=kernel, fixed=fixed, criterion=criterion,
                            multi_bw_min=[multi_bw_min], multi_bw_max=[multi_bw_max],
                            multi_tau_min=[multi_tau_min], multi_tau_max=[multi_tau_max])
@@ -48,4 +53,3 @@ def analysis_process(file_path, y_var, x_vars, coords, t_var, kernel, fixed, cri
     finally:
         sys.stdout = sys.__stdout__  # 恢复标准输出
         sys.stderr = sys.__stderr__
-

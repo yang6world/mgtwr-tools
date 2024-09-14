@@ -1,4 +1,5 @@
 from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QDoubleValidator, QIntValidator
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QFileDialog, QListWidget, QListWidgetItem,
                              QComboBox, QLineEdit, QPushButton, QHBoxLayout, QMessageBox, QGridLayout)
 from multiprocessing import Process, Queue, Manager
@@ -176,49 +177,121 @@ class MGRWRAnalysisPage(QWidget):
 
         if model == 'GTWR':
             # GTWR 参数
+
+            # 收敛公差
+            tol_label = QLabel("收敛公差")
+            tol_input = QLineEdit()
+            tol_input.setToolTip("控制模型收敛的公差（默认值为1.0e-6）")
+            tol_input.setText("1.0e-6")
+            tol_layout = QHBoxLayout()
+            tol_layout.addWidget(tol_label)
+            tol_layout.addWidget(tol_input)
+
+            # 最大迭代次数
+            max_iter_label = QLabel("最大迭代次数")
+            max_iter_input = QLineEdit()
+            max_iter_input.setToolTip("模型的最大迭代次数（默认值为200）")
+            max_iter_input.setText("200")
+            # 设置只能输入整数
+            max_iter_input.setValidator(QIntValidator(1, 1000))
+            max_iter_layout = QHBoxLayout()
+            max_iter_layout.addWidget(max_iter_label)
+            max_iter_layout.addWidget(max_iter_input)
+
+            # 带宽小数点精度
+            bw_decimal_label = QLabel("带宽精度")
+            bw_decimal_input = QLineEdit()
+            bw_decimal_input.setToolTip("指定带宽的小数点精度（默认值为1）")
+            bw_decimal_input.setText("1")
+            # 设置只能输入整数
+            bw_decimal_input.setValidator(QIntValidator(0, 10))
+            bw_decimal_layout = QHBoxLayout()
+            bw_decimal_layout.addWidget(bw_decimal_label)
+            bw_decimal_layout.addWidget(bw_decimal_input)
+
+            # 时空尺度小数点精度
+            tau_decimal_label = QLabel("时空尺度精度")
+            tau_decimal_input = QLineEdit()
+            tau_decimal_input.setToolTip("指定时空尺度的小数点精度（默认值为1）")
+            tau_decimal_input.setText("1")
+            # 设置只能输入整数
+            tau_decimal_input.setValidator(QIntValidator(0, 10))
+            tau_decimal_layout = QHBoxLayout()
+            tau_decimal_layout.addWidget(tau_decimal_label)
+            tau_decimal_layout.addWidget(tau_decimal_input)
+
+            # 将所有参数放入一个水平布局
+            param_combined_layout = QHBoxLayout()
+            param_combined_layout.addLayout(tol_layout)
+            param_combined_layout.addLayout(max_iter_layout)
+            param_combined_layout.addLayout(bw_decimal_layout)
+            param_combined_layout.addLayout(tau_decimal_layout)
+            self.param_layout.addLayout(param_combined_layout)
+
+            # 带宽最小值
             bw_min_label = QLabel("带宽最小值")
             bw_min_input = QLineEdit()
-            bw_min_layout = QHBoxLayout()  # 创建水平布局
+            bw_min_input.setToolTip("模型使用的带宽最小值")
+            # 设置只能输入浮点数
+            bw_min_input.setValidator(QDoubleValidator(0.0, 9999.9, 3))
+            bw_min_layout = QHBoxLayout()
             bw_min_layout.addWidget(bw_min_label)
             bw_min_layout.addWidget(bw_min_input)
 
+            # 带宽最大值
             bw_max_label = QLabel("带宽最大值")
             bw_max_input = QLineEdit()
+            bw_max_input.setToolTip("模型使用的带宽最大值")
+            # 设置只能输入浮点数
+            bw_max_input.setValidator(QDoubleValidator(0.0, 9999.9, 3))
             bw_max_layout = QHBoxLayout()
             bw_max_layout.addWidget(bw_max_label)
             bw_max_layout.addWidget(bw_max_input)
 
-            # 将两个水平布局放入一个总的水平布局中
+            # 将带宽布局添加到主布局
             bw_combined_layout = QHBoxLayout()
             bw_combined_layout.addLayout(bw_min_layout)
             bw_combined_layout.addLayout(bw_max_layout)
-            self.param_layout.addLayout(bw_combined_layout)  # 添加到主布局
+            self.param_layout.addLayout(bw_combined_layout)
 
+            # 时空尺度最小值
             tau_min_label = QLabel("时空尺度最小值")
             tau_min_input = QLineEdit()
+            tau_min_input.setToolTip("模型使用的时空尺度最小值")
+            # 设置只能输入浮点数
+            tau_min_input.setValidator(QDoubleValidator(0.0, 9999.9, 3))
             tau_min_layout = QHBoxLayout()
             tau_min_layout.addWidget(tau_min_label)
             tau_min_layout.addWidget(tau_min_input)
 
+            # 时空尺度最大值
             tau_max_label = QLabel("时空尺度最大值")
             tau_max_input = QLineEdit()
+            tau_max_input.setToolTip("模型使用的时空尺度最大值")
+            # 设置只能输入浮点数
+            tau_max_input.setValidator(QDoubleValidator(0.0, 9999.9, 3))
             tau_max_layout = QHBoxLayout()
             tau_max_layout.addWidget(tau_max_label)
             tau_max_layout.addWidget(tau_max_input)
 
-            # 将 tau 的两个输入框放到一个总的水平布局中
+            # 将时空尺度布局添加到主布局
             tau_combined_layout = QHBoxLayout()
             tau_combined_layout.addLayout(tau_min_layout)
             tau_combined_layout.addLayout(tau_max_layout)
-            self.param_layout.addLayout(tau_combined_layout)  # 添加到主布局
+            self.param_layout.addLayout(tau_combined_layout)
 
             # 保存动态输入的引用
             self.dynamic_inputs = {
                 'bw_min': bw_min_input,
                 'bw_max': bw_max_input,
                 'tau_min': tau_min_input,
-                'tau_max': tau_max_input
+                'tau_max': tau_max_input,
+                'tol': tol_input,
+                'bw_decimal': bw_decimal_input,
+                'tau_decimal': tau_decimal_input,
+                'max_iter': max_iter_input,
             }
+
 
         elif model == 'MGTWR':
             # MGTWR 参数
@@ -292,15 +365,19 @@ class MGRWRAnalysisPage(QWidget):
         try:
             params = {}
             if model == 'GTWR':
-                params['bw_min'] = self.get_input_value(self.dynamic_inputs['bw_min'])
-                params['bw_max'] = self.get_input_value(self.dynamic_inputs['bw_max'])
-                params['tau_min'] = self.get_input_value(self.dynamic_inputs['tau_min'])
-                params['tau_max'] = self.get_input_value(self.dynamic_inputs['tau_max'])
+                params['bw_min'] = self.get_input_value_float(self.dynamic_inputs['bw_min'])
+                params['bw_max'] = self.get_input_value_float(self.dynamic_inputs['bw_max'])
+                params['tau_min'] = self.get_input_value_float(self.dynamic_inputs['tau_min'])
+                params['tau_max'] = self.get_input_value_float(self.dynamic_inputs['tau_max'])
+                params['tol'] = self.get_input_value_float(self.dynamic_inputs['tol'])
+                params['bw_decimal'] = self.get_input_value_int(self.dynamic_inputs['bw_decimal'])
+                params['tau_decimal'] = self.get_input_value_int(self.dynamic_inputs['tau_decimal'])
+                params['max_iter'] = self.get_input_value_int(self.dynamic_inputs['max_iter'])
             elif model == 'MGTWR':
-                params['multi_bw_min'] = self.get_input_value(self.dynamic_inputs['multi_bw_min'])
-                params['multi_bw_max'] = self.get_input_value(self.dynamic_inputs['multi_bw_max'])
-                params['multi_tau_min'] = self.get_input_value(self.dynamic_inputs['multi_tau_min'])
-                params['multi_tau_max'] = self.get_input_value(self.dynamic_inputs['multi_tau_max'])
+                params['multi_bw_min'] = self.get_input_value_float(self.dynamic_inputs['multi_bw_min'])
+                params['multi_bw_max'] = self.get_input_value_float(self.dynamic_inputs['multi_bw_max'])
+                params['multi_tau_min'] = self.get_input_value_float(self.dynamic_inputs['multi_tau_min'])
+                params['multi_tau_max'] = self.get_input_value_float(self.dynamic_inputs['multi_tau_max'])
 
             # 启动多进程分析任务
             analysis_process_args = (
@@ -317,11 +394,20 @@ class MGRWRAnalysisPage(QWidget):
         except Exception as e:
             self.console_output.append(f"分析时发生错误: {e}")
 
-    def get_input_value(self, input_field):
+    def get_input_value_float(self, input_field):
         """获取用户输入的数值，如果为空则返回 None"""
         try:
             value = input_field.text().strip()
             return float(value) if value else None
+        except ValueError:
+            self.console_output.append(f"输入无效: {input_field.text()}")
+            return None
+
+    def get_input_value_int(self, input_field):
+        """获取用户输入的数值，如果为空则返回 None"""
+        try:
+            value = input_field.text().strip()
+            return int(value) if value else None
         except ValueError:
             self.console_output.append(f"输入无效: {input_field.text()}")
             return None

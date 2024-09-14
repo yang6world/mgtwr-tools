@@ -84,6 +84,10 @@ class DataAnalysis:
         tau_decimal    : scalar
                          时空尺度搜索时保存的小数位数
         """
+        # 输出传入的参数
+        for key, value in locals().items():
+            if key != 'self':
+                print(f"{key}: {value}")
         # 带宽选择
         sel = SearchGTWRParameter(self.coords, self.t, self.x, self.y, kernel=kernel, fixed=fixed)
         bw, tau = sel.search(verbose=True, time_cost=True, criterion=criterion, bw_min=bw_min, bw_max=bw_max,
