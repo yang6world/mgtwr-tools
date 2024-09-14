@@ -1,11 +1,14 @@
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QDoubleValidator, QIntValidator
+from PyQt5.QtGui import QDoubleValidator, QIntValidator, QCursor
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QFileDialog, QListWidget, QListWidgetItem,
                              QComboBox, QLineEdit, QPushButton, QHBoxLayout, QMessageBox, QGridLayout)
 from multiprocessing import Process, Queue, Manager
+
+from utils.urltools import get_resource_path
 from views.components.button import ModernButton
 import pandas as pd
 from utils.data_analysis import DataAnalysis
+import webbrowser
 from views.background_task.analysis import analysis_process
 from views.components.parameter_box import creat_gtwr_param_box, creat_mgtwr_param_box
 
@@ -24,9 +27,14 @@ class MGRWRAnalysisPage(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        title_label = QLabel("MGRWR 分析")
-        # 为标题添加超链接
-        title_label.setText(f'<a href="about:blank">MGRWR 分析</a>')
+        title_label = QLabel("数据分析")
+        # 为标题添加超链接点击打开帮助文档index.html
+        title_label.setOpenExternalLinks(True)
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setText('<a href="#" style="color: blue; text-decoration: none;">数据分析(参数设置说明请点这里)</a>')
+        title_label.setOpenExternalLinks(False)  # 禁用默认的链接处理
+        title_label.linkActivated.connect(self.open_help)
+        title_label.setCursor(QCursor(Qt.PointingHandCursor))  # 设置鼠标悬停时的光标样式
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("""
             font-size: 24px;
@@ -140,6 +148,10 @@ class MGRWRAnalysisPage(QWidget):
         self.queue_timer = QTimer(self)
         self.queue_timer.timeout.connect(self.read_queue)
         self.queue_timer.start(500)  # 每 500ms 读取一次队列
+
+    def open_help(self):
+        help_url = get_resource_path("template/index.html")
+        webbrowser.open(help_url)
 
     def read_queue(self):
         """

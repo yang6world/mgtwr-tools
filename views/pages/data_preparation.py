@@ -31,12 +31,12 @@ class DataGenerationPage(QWidget):
         layout.addWidget(title_label)
 
         # Excel 文件选择
-        file_button = ModernButton("选择 Excel 文件")
-        file_button.clicked.connect(self.select_file)
-        layout.addWidget(file_button)
+        # file_button = ModernButton("选择 Excel 文件")
+        # file_button.clicked.connect(self.select_file)
+        # layout.addWidget(file_button)
 
-        self.file_label = QLabel("未选择文件")
-        layout.addWidget(self.file_label)
+        # self.file_label = QLabel("未选择文件")
+        # layout.addWidget(self.file_label)
 
         # 省份多选
         province_label = QLabel("选择省份")

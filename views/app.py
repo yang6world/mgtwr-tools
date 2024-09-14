@@ -10,6 +10,7 @@ from views.components.console import ConsoleOutput
 from views.pages.MGTWR_analysis import MGRWRAnalysisPage
 from views.pages.data_crawling import DirectorySelector
 from views.pages.data_preparation import DataGenerationPage
+from views.pages.data_visualization import DataVisualizationPage
 from views.pages.task_manager import TaskManager
 
 
@@ -35,11 +36,13 @@ class MainWindow(QMainWindow):
         self.data_gen_button = ModernButton("数据生成")
         self.dir_select_button = ModernButton("数据爬取")
         self.mgrwr_button = ModernButton("数据分析")
+        self.data_visualization_button = ModernButton("数据可视化")
         self.task_manager_button = ModernButton("任务管理")
 
         button_layout.addWidget(self.data_gen_button)
         button_layout.addWidget(self.dir_select_button)
         button_layout.addWidget(self.mgrwr_button)
+        button_layout.addWidget(self.data_visualization_button)
         button_layout.addWidget(self.task_manager_button)
 
 
@@ -52,10 +55,12 @@ class MainWindow(QMainWindow):
         self.console_output = ConsoleOutput()
 
         # 创建三个页面
+
         self.task_manager = TaskManager()
         self.data_gen_page = DataGenerationPage(self.console_output)
         self.dir_select_page = DirectorySelector(self.console_output, self.task_manager)
         self.mgrwr_page = MGRWRAnalysisPage(self.console_output, self.task_manager)
+        self.data_visualization_page = DataVisualizationPage(self.console_output)
         # 任务管理页面
 
 
@@ -63,6 +68,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.data_gen_page)
         self.stack.addWidget(self.dir_select_page)
         self.stack.addWidget(self.mgrwr_page)
+        self.stack.addWidget(self.data_visualization_page)
         self.stack.addWidget(self.task_manager)
 
         # 创建分割器
@@ -87,7 +93,8 @@ class MainWindow(QMainWindow):
         self.data_gen_button.clicked.connect(lambda: self.stack.setCurrentIndex(0))
         self.dir_select_button.clicked.connect(lambda: self.stack.setCurrentIndex(1))
         self.mgrwr_button.clicked.connect(lambda: self.stack.setCurrentIndex(2))
-        self.task_manager_button.clicked.connect(lambda: self.stack.setCurrentIndex(3))
+        self.data_visualization_button.clicked.connect(lambda: self.stack.setCurrentIndex(3))
+        self.task_manager_button.clicked.connect(lambda: self.stack.setCurrentIndex(4))
         # 重定向 stdout 和 stderr
         sys.stdout = self.console_output
         sys.stderr = self.console_output
