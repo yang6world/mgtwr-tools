@@ -1,16 +1,18 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QFileDialog, QListWidget, QListWidgetItem,
                              QComboBox, QLineEdit, QPushButton, QHBoxLayout, QMessageBox, QGridLayout)
-
+from multiprocessing import Process, Queue, Manager
 from views.components.button import ModernButton
 import pandas as pd
 from utils.data_analysis import DataAnalysis
+from views.background_task.analysis import analysis_process
 
 
 class MGRWRAnalysisPage(QWidget):
-    def __init__(self, console_output):
+    def __init__(self, console_output, task_manager):
         super().__init__()
         self.console_output = console_output
+        self.task_manager = task_manager
         self.analysis = None
         self.initUI()
 
@@ -115,6 +117,19 @@ class MGRWRAnalysisPage(QWidget):
         layout.addWidget(analyze_button)
 
         self.update_parameters()
+
+        self.output_queue = Queue()
+        self.queue_timer = QTimer(self)
+        self.queue_timer.timeout.connect(self.read_queue)
+        self.queue_timer.start(500)  # 每 500ms 读取一次队列
+
+    def read_queue(self):
+        """
+        定期读取子进程的输出队列，并将内容显示到控制台。
+        """
+        while not self.output_queue.empty():
+            message = self.output_queue.get()
+            self.console_output.write(message)
 
     def import_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "选择 Excel 文件", "", "Excel 文件 (*.xlsx)")
@@ -266,8 +281,6 @@ class MGRWRAnalysisPage(QWidget):
             self.console_output.append("请完整选择自变量、因变量、时间和经纬度列")
             return
 
-        self.analysis.set_variables(x_vars, [y_var], [t_var], coords)
-
         # 获取用户选择的核函数、固定带宽和准则
         kernel = self.kernel_combo.currentText()
         fixed = self.fixed_combo.currentText() == 'True'
@@ -275,27 +288,31 @@ class MGRWRAnalysisPage(QWidget):
 
         # 获取动态参数输入
         model = self.model_combo.currentText()
-
         try:
+            params = {}
             if model == 'GTWR':
-                bw_min = self.get_input_value(self.dynamic_inputs['bw_min'])
-                bw_max = self.get_input_value(self.dynamic_inputs['bw_max'])
-                tau_min = self.get_input_value(self.dynamic_inputs['tau_min'])
-                tau_max = self.get_input_value(self.dynamic_inputs['tau_max'])
-                self.analysis.gtwr(kernel=kernel, fixed=fixed, criterion=criterion,
-                                   bw_min=bw_min, bw_max=bw_max, tau_min=tau_min, tau_max=tau_max)
+                params['bw_min'] = self.get_input_value(self.dynamic_inputs['bw_min'])
+                params['bw_max'] = self.get_input_value(self.dynamic_inputs['bw_max'])
+                params['tau_min'] = self.get_input_value(self.dynamic_inputs['tau_min'])
+                params['tau_max'] = self.get_input_value(self.dynamic_inputs['tau_max'])
             elif model == 'MGTWR':
-                multi_bw_min = self.get_input_value(self.dynamic_inputs['multi_bw_min'])
-                multi_bw_max = self.get_input_value(self.dynamic_inputs['multi_bw_max'])
-                multi_tau_min = self.get_input_value(self.dynamic_inputs['multi_tau_min'])
-                self.get_input_value(self.dynamic_inputs['multi_tau_min'])
-                multi_tau_max = self.get_input_value(self.dynamic_inputs['multi_tau_max'])
+                params['multi_bw_min'] = self.get_input_value(self.dynamic_inputs['multi_bw_min'])
+                params['multi_bw_max'] = self.get_input_value(self.dynamic_inputs['multi_bw_max'])
+                params['multi_tau_min'] = self.get_input_value(self.dynamic_inputs['multi_tau_min'])
+                params['multi_tau_max'] = self.get_input_value(self.dynamic_inputs['multi_tau_max'])
 
-                self.analysis.mgtwr(kernel=kernel, fixed=fixed, criterion=criterion,
-                                    multi_bw_min=[multi_bw_min], multi_bw_max=[multi_bw_max],
-                                    multi_tau_min=[multi_tau_min], multi_tau_max=[multi_tau_max])
+            # 启动多进程分析任务
+            analysis_process_args = (
+                self.analysis.file_path, y_var, x_vars, coords, t_var, kernel, fixed, criterion, model, params,
+                self.output_queue
+            )
+            analysis_processes = Process(target=analysis_process, args=analysis_process_args)
 
-            self.console_output.append(f"{model} 分析完成！")
+            # 将任务添加到任务管理器
+            task_id = len(self.task_manager.tasks) + 1
+            self.task_manager.add_task(task_id, analysis_processes, "进程")
+            # 启动进程
+            analysis_processes.start()
         except Exception as e:
             self.console_output.append(f"分析时发生错误: {e}")
 

@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
         self.task_manager = TaskManager()
         self.data_gen_page = DataGenerationPage(self.console_output)
         self.dir_select_page = DirectorySelector(self.console_output, self.task_manager)
-        self.mgrwr_page = MGRWRAnalysisPage(self.console_output)
+        self.mgrwr_page = MGRWRAnalysisPage(self.console_output, self.task_manager)
         # 任务管理页面
 
 

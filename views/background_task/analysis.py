@@ -1,35 +1,47 @@
-import time
-from multiprocessing import Process, Manager
+import sys
+from multiprocessing import Queue
+
+from utils.data_analysis import DataAnalysis
 
 
-class WorkerProcess:
-    """封装分析任务的进程"""
+class QueueWriter:
+    """将子进程的 print 输出重定向到 multiprocessing.Queue 的类。"""
+    def __init__(self, queue):
+        self.queue = queue
 
-    def __init__(self, task_id, update_func):
-        self.task_id = task_id
-        self.update_func = update_func
-        self.manager = Manager()
-        self.result_dict = self.manager.dict()
-        self.result_dict['status'] = "初始化中"
-        self.process = Process(target=self.run_task)
+    def write(self, message):
+        if message.strip():  # 避免传递空行
+            self.queue.put(message)
 
-    def run_task(self):
-        """模拟耗时任务"""
-        for i in range(10):
-            time.sleep(1)
-            self.result_dict['status'] = f"任务 {self.task_id} 进度: {i + 1}/10"
-            self.update_func(self.result_dict['status'])
+    def flush(self):
+        pass  # 无需缓冲
 
-        self.result_dict['status'] = f"任务 {self.task_id} 完成"
-        self.update_func(self.result_dict['status'])
+def analysis_process(file_path, y_var, x_vars, coords, t_var, kernel, fixed, criterion, model, params, queue):
+    """
+    分析任务进程，实际执行分析并通过队列报告状态。
+    queue: 用于传递子进程的状态和 print 输出
+    """
+    try:
+        # 重定向 sys.stdout 到队列
+        sys.stdout = QueueWriter(queue)
+        print(f"开始 {model} 分析...")
+        # 模拟分析任务
+        analysis = DataAnalysis(file_path)
+        analysis.set_variables(x_vars, [y_var], [t_var], coords)
 
-    def start(self):
-        """启动任务"""
-        self.process.start()
+        if model == 'GTWR':
+            bw_min, bw_max, tau_min, tau_max = params['bw_min'], params['bw_max'], params['tau_min'], params['tau_max']
+            analysis.gtwr(kernel=kernel, fixed=fixed, criterion=criterion,
+                          bw_min=bw_min, bw_max=bw_max, tau_min=tau_min, tau_max=tau_max)
+        elif model == 'MGTWR':
+            multi_bw_min, multi_bw_max, multi_tau_min, multi_tau_max = params['multi_bw_min'], params['multi_bw_max'], params['multi_tau_min'], params['multi_tau_max']
+            analysis.mgtwr(kernel=kernel, fixed=fixed, criterion=criterion,
+                           multi_bw_min=[multi_bw_min], multi_bw_max=[multi_bw_max],
+                           multi_tau_min=[multi_tau_min], multi_tau_max=[multi_tau_max])
 
-    def terminate(self):
-        """终止任务"""
-        if self.process.is_alive():
-            self.process.terminate()
-            self.process.join()
-            self.update_func(f"任务 {self.task_id} 已终止")
+        queue.put(f"{model} 分析完成")
+    except Exception as e:
+        queue.put(f"分析错误: {e}")
+    finally:
+        sys.stdout = sys.__stdout__  # 恢复标准输出
+

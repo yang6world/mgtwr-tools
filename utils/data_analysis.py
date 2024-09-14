@@ -8,6 +8,7 @@ from mgtwr.model import MGTWR
 
 class DataAnalysis:
     def __init__(self, path):
+        self.file_path = path
         self.excel_data = self.get_xlsx_data(path)
         self.x = None
         self.y = None
