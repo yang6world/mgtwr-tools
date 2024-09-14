@@ -103,3 +103,10 @@ class TaskManager(QMainWindow):
                 except psutil.NoSuchProcess:
                     continue
 
+    def delete_task(self, task_id):
+        # 删除任务
+        for i in range(self.task_table.rowCount()):
+            if int(self.task_table.item(i, 0).text()) == task_id:
+                self.task_table.removeRow(i)
+                break
+        del self.tasks[task_id]

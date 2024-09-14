@@ -70,6 +70,16 @@ class MainWindow(QMainWindow):
         splitter.setSizes([400, 200])
 
         main_layout.addWidget(splitter)
+        console_button_layout = QHBoxLayout()
+        # 创建控制台输出,清空按钮
+        clear_button = ModernButton("清空控制台")
+        clear_button.clicked.connect(self.console_output.clear)
+        console_button_layout.addWidget(clear_button)
+        # 保存按钮
+        save_button = ModernButton("保存控制台输出")
+        save_button.clicked.connect(self.console_output.save)
+        console_button_layout.addWidget(save_button)
+        main_layout.addLayout(console_button_layout)
 
         # 连接按钮信号
         self.data_gen_button.clicked.connect(lambda: self.stack.setCurrentIndex(0))

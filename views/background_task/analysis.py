@@ -1,36 +1,35 @@
-from PyQt5.QtCore import QThread, pyqtSignal, QMutex, QMutexLocker
-
-from utils.reptile import get_data_pre
-
-
-class AnalysisThread(QThread):
-    progress_signal = pyqtSignal(str)  # 任务进度信号
-    finished_signal = pyqtSignal(str)  # 任务完成信号
-    error_signal = pyqtSignal(str)  # 任务错误信号
-    resource_signal = pyqtSignal(dict)  # 任务资源监控信号
-
-    def __init__(self, selected_id, filepath, task_id):
-        super().__init__()
-        self.selected_id = selected_id
-        self.filepath = filepath
-        self.task_id = task_id  # 任务唯一标识
-        self.running = True  # 任务是否正在运行
-        self.mutex = QMutex()  # 用于线程安全的互斥锁
-
-    def run(self):
-        self.progress_signal.emit(f"开始进行数据分析，任务ID: {self.task_id}")
-        try:
-            if not self.running:
-                return  # 检查任务是否被终止
-            get_data_pre(self.selected_id, self.filepath)
-            self.finished_signal.emit(f"分析完成，任务ID: {self.task_id}")
-        except Exception as e:
-            self.error_signal.emit(f"错误: {e}")
-
-    def stop(self):
-        with QMutexLocker(self.mutex):
-            self.running = False
-        self.finished_signal.emit(f"任务已终止，任务ID: {self.task_id}")
+import time
+from multiprocessing import Process, Manager
 
 
+class WorkerProcess:
+    """封装分析任务的进程"""
 
+    def __init__(self, task_id, update_func):
+        self.task_id = task_id
+        self.update_func = update_func
+        self.manager = Manager()
+        self.result_dict = self.manager.dict()
+        self.result_dict['status'] = "初始化中"
+        self.process = Process(target=self.run_task)
+
+    def run_task(self):
+        """模拟耗时任务"""
+        for i in range(10):
+            time.sleep(1)
+            self.result_dict['status'] = f"任务 {self.task_id} 进度: {i + 1}/10"
+            self.update_func(self.result_dict['status'])
+
+        self.result_dict['status'] = f"任务 {self.task_id} 完成"
+        self.update_func(self.result_dict['status'])
+
+    def start(self):
+        """启动任务"""
+        self.process.start()
+
+    def terminate(self):
+        """终止任务"""
+        if self.process.is_alive():
+            self.process.terminate()
+            self.process.join()
+            self.update_func(f"任务 {self.task_id} 已终止")

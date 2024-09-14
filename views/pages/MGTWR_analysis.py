@@ -114,6 +114,8 @@ class MGRWRAnalysisPage(QWidget):
         analyze_button.clicked.connect(self.start_analysis)
         layout.addWidget(analyze_button)
 
+        self.update_parameters()
+
     def import_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "选择 Excel 文件", "", "Excel 文件 (*.xlsx)")
         if file_path:
@@ -137,10 +139,23 @@ class MGRWRAnalysisPage(QWidget):
             self.coords_list.addItem(QListWidgetItem(header))
         self.time_combo.addItems(headers)
 
+    def clear_layout(self, layout):
+        """递归清空布局中的所有控件和子布局"""
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+
+                if widget is not None:
+                    widget.deleteLater()  # 删除控件
+
+                layout_item = item.layout()
+                if layout_item is not None:
+                    self.clear_layout(layout_item)  # 递归清除子布局
+
     def update_parameters(self):
-        # 清空动态参数区
-        for i in reversed(range(self.param_layout.count())):
-            self.param_layout.itemAt(i).widget().deleteLater()
+        # 清空动态参数区，删除整个布局及其子控件
+        self.clear_layout(self.param_layout)
 
         model = self.model_combo.currentText()
 
@@ -148,24 +163,41 @@ class MGRWRAnalysisPage(QWidget):
             # GTWR 参数
             bw_min_label = QLabel("带宽最小值")
             bw_min_input = QLineEdit()
-            self.param_layout.addWidget(bw_min_label)
-            self.param_layout.addWidget(bw_min_input)
+            bw_min_layout = QHBoxLayout()  # 创建水平布局
+            bw_min_layout.addWidget(bw_min_label)
+            bw_min_layout.addWidget(bw_min_input)
 
             bw_max_label = QLabel("带宽最大值")
             bw_max_input = QLineEdit()
-            self.param_layout.addWidget(bw_max_label)
-            self.param_layout.addWidget(bw_max_input)
+            bw_max_layout = QHBoxLayout()
+            bw_max_layout.addWidget(bw_max_label)
+            bw_max_layout.addWidget(bw_max_input)
+
+            # 将两个水平布局放入一个总的水平布局中
+            bw_combined_layout = QHBoxLayout()
+            bw_combined_layout.addLayout(bw_min_layout)
+            bw_combined_layout.addLayout(bw_max_layout)
+            self.param_layout.addLayout(bw_combined_layout)  # 添加到主布局
 
             tau_min_label = QLabel("时空尺度最小值")
             tau_min_input = QLineEdit()
-            self.param_layout.addWidget(tau_min_label)
-            self.param_layout.addWidget(tau_min_input)
+            tau_min_layout = QHBoxLayout()
+            tau_min_layout.addWidget(tau_min_label)
+            tau_min_layout.addWidget(tau_min_input)
 
             tau_max_label = QLabel("时空尺度最大值")
             tau_max_input = QLineEdit()
-            self.param_layout.addWidget(tau_max_label)
-            self.param_layout.addWidget(tau_max_input)
+            tau_max_layout = QHBoxLayout()
+            tau_max_layout.addWidget(tau_max_label)
+            tau_max_layout.addWidget(tau_max_input)
 
+            # 将 tau 的两个输入框放到一个总的水平布局中
+            tau_combined_layout = QHBoxLayout()
+            tau_combined_layout.addLayout(tau_min_layout)
+            tau_combined_layout.addLayout(tau_max_layout)
+            self.param_layout.addLayout(tau_combined_layout)  # 添加到主布局
+
+            # 保存动态输入的引用
             self.dynamic_inputs = {
                 'bw_min': bw_min_input,
                 'bw_max': bw_max_input,
@@ -177,24 +209,41 @@ class MGRWRAnalysisPage(QWidget):
             # MGTWR 参数
             multi_bw_min_label = QLabel("多带宽最小值")
             multi_bw_min_input = QLineEdit()
-            self.param_layout.addWidget(multi_bw_min_label)
-            self.param_layout.addWidget(multi_bw_min_input)
+            multi_bw_min_layout = QHBoxLayout()
+            multi_bw_min_layout.addWidget(multi_bw_min_label)
+            multi_bw_min_layout.addWidget(multi_bw_min_input)
 
             multi_bw_max_label = QLabel("多带宽最大值")
             multi_bw_max_input = QLineEdit()
-            self.param_layout.addWidget(multi_bw_max_label)
-            self.param_layout.addWidget(multi_bw_max_input)
+            multi_bw_max_layout = QHBoxLayout()
+            multi_bw_max_layout.addWidget(multi_bw_max_label)
+            multi_bw_max_layout.addWidget(multi_bw_max_input)
+
+            # 将两个多带宽的输入框放到一个总的水平布局中
+            multi_bw_combined_layout = QHBoxLayout()
+            multi_bw_combined_layout.addLayout(multi_bw_min_layout)
+            multi_bw_combined_layout.addLayout(multi_bw_max_layout)
+            self.param_layout.addLayout(multi_bw_combined_layout)
 
             multi_tau_min_label = QLabel("多时空尺度最小值")
             multi_tau_min_input = QLineEdit()
-            self.param_layout.addWidget(multi_tau_min_label)
-            self.param_layout.addWidget(multi_tau_min_input)
+            multi_tau_min_layout = QHBoxLayout()
+            multi_tau_min_layout.addWidget(multi_tau_min_label)
+            multi_tau_min_layout.addWidget(multi_tau_min_input)
 
             multi_tau_max_label = QLabel("多时空尺度最大值")
             multi_tau_max_input = QLineEdit()
-            self.param_layout.addWidget(multi_tau_max_label)
-            self.param_layout.addWidget(multi_tau_max_input)
+            multi_tau_max_layout = QHBoxLayout()
+            multi_tau_max_layout.addWidget(multi_tau_max_label)
+            multi_tau_max_layout.addWidget(multi_tau_max_input)
 
+            # 将两个多时空尺度的输入框放到一个总的水平布局中
+            multi_tau_combined_layout = QHBoxLayout()
+            multi_tau_combined_layout.addLayout(multi_tau_min_layout)
+            multi_tau_combined_layout.addLayout(multi_tau_max_layout)
+            self.param_layout.addLayout(multi_tau_combined_layout)
+
+            # 保存动态输入的引用
             self.dynamic_inputs = {
                 'multi_bw_min': multi_bw_min_input,
                 'multi_bw_max': multi_bw_max_input,
@@ -258,4 +307,3 @@ class MGRWRAnalysisPage(QWidget):
         except ValueError:
             self.console_output.append(f"输入无效: {input_field.text()}")
             return None
-

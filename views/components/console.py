@@ -1,4 +1,6 @@
-from PyQt5.QtWidgets import QTextEdit
+from PyQt5.QtWidgets import QTextEdit, QFileDialog
+
+from views.components.button import ModernButton
 
 
 class ConsoleOutput(QTextEdit):
@@ -13,6 +15,8 @@ class ConsoleOutput(QTextEdit):
                 font-size: 12px;
             }
         """)
+
+
     def write(self, message):
         # 将输出追加到文本控件中
         self.append(message)
@@ -21,3 +25,13 @@ class ConsoleOutput(QTextEdit):
 
     def flush(self):
         pass  # 不需要实现
+
+    def clear(self):
+        self.setText("")
+
+    def save(self):
+        # 保存到文件
+        file_path, _ = QFileDialog.getSaveFileName(self, "保存输出", "", "文本文件 (*.txt)")
+        if file_path:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(self.toPlainText())
