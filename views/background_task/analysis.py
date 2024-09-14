@@ -41,11 +41,18 @@ def analysis_process(file_path, y_var, x_vars, coords, t_var, kernel, fixed, cri
                           bw_min=bw_min, bw_max=bw_max, tau_min=tau_min, tau_max=tau_max, tol=tol,
                           bw_decimal=bw_decimal, tau_decimal=tau_decimal, max_iter=max_iter)
         elif model == 'MGTWR':
-            multi_bw_min, multi_bw_max, multi_tau_min, multi_tau_max = params['multi_bw_min'], params['multi_bw_max'], \
-            params['multi_tau_min'], params['multi_tau_max']
+            bw_min_input, bw_max_input, tau_min_input, tau_max_input, multi_bw_min_input, multi_bw_max_input, multi_tau_min_input, multi_tau_max_input, tol_input, bw_decimal_input, tau_decimal_input, init_bw_input, init_tau_input, tol_multi_input, rss_score_input = \
+                params['bw_min'], params['bw_max'], params['tau_min'], params['tau_max'], params['multi_bw_min'], \
+                params['multi_bw_max'], params['multi_tau_min'], params['multi_tau_max'], params['tol'], params[
+                    'bw_decimal'], params['tau_decimal'], params['init_bw'], params['init_tau'], params['tol_multi'], \
+                params['rss_score']
+
             analysis.mgtwr(kernel=kernel, fixed=fixed, criterion=criterion,
-                           multi_bw_min=[multi_bw_min], multi_bw_max=[multi_bw_max],
-                           multi_tau_min=[multi_tau_min], multi_tau_max=[multi_tau_max])
+                           bw_min=bw_min_input, bw_max=bw_max_input, tau_min=tau_min_input, tau_max=tau_max_input,
+                           multi_bw_min=multi_bw_min_input, multi_bw_max=multi_bw_max_input,
+                           multi_tau_min=multi_tau_min_input, multi_tau_max=multi_tau_max_input, tol=tol_input,
+                           bw_decimal=bw_decimal_input, tau_decimal=tau_decimal_input, init_bw=init_bw_input,
+                           init_tau=init_tau_input, tol_multi=tol_multi_input, rss_score=rss_score_input)
 
         print(f"{model} 分析完成")
     except Exception as e:

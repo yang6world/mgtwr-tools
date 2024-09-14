@@ -193,6 +193,9 @@ class DataAnalysis:
                          如果为 False，则使用一个平滑函数来进行评估；默认值为 False。
 
     """
+        for key, value in locals().items():
+            if key != 'self':
+                print(f"{key}: {value}")
         selector = SearchMGTWRParameter(self.coords, self.t, self.x, self.y, kernel=kernel, fixed=fixed)
         bws = selector.search(verbose=True, time_cost=True, criterion=criterion, bw_min=bw_min, bw_max=bw_max,
                               tau_min=tau_min, tau_max=tau_max, tol=tol, bw_decimal=bw_decimal, tau_decimal=tau_decimal,

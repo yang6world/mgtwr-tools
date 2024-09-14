@@ -21,6 +21,8 @@ class MainWindow(QMainWindow):
     def initUI(self):
         self.setWindowTitle('多功能数据分析工具')
         self.setGeometry(100, 100, 800, 600)
+        self.setMinimumSize(850, 1200)
+        self.setMaximumSize(1800, 1300)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
