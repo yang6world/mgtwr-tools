@@ -31,8 +31,8 @@ class MainWindow(QMainWindow):
         # 创建页面切换按钮
         button_layout = QHBoxLayout()
         self.data_gen_button = ModernButton("数据生成")
-        self.dir_select_button = ModernButton("目录选择")
-        self.mgrwr_button = ModernButton("MGRWR 分析")
+        self.dir_select_button = ModernButton("数据爬取")
+        self.mgrwr_button = ModernButton("数据分析")
         self.task_manager_button = ModernButton("任务管理")
 
         button_layout.addWidget(self.data_gen_button)

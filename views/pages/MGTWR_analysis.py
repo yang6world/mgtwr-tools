@@ -288,6 +288,7 @@ class MGRWRAnalysisPage(QWidget):
 
         # 获取动态参数输入
         model = self.model_combo.currentText()
+        self.console_output.clear()
         try:
             params = {}
             if model == 'GTWR':
