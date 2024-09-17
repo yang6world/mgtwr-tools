@@ -16,7 +16,6 @@ class DataVisualizationPage(QWidget):
         # 创建图片标签
         image_label = QLabel(self)
         pixmap = QPixmap(get_resource_path("emoji.jpg"))
-        print(get_resource_path("emoji.png"))
         pixmap = pixmap.scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         image_label.setPixmap(pixmap)
         image_label.setAlignment(Qt.AlignCenter)
