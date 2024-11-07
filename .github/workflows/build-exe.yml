@@ -20,13 +20,17 @@ jobs:
         with:
           python-version: '3.11'
           architecture: 'x64'
+      # 提取版本号并设置为环境变量
+      - name: Extract version number
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" | sed 's/^v//' >> $GITHUB_ENV
+      # 输出版本号
+      - name: Output version number
+        run: echo $VERSION
       # Install dependencies
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
-      # 提取版本号并设置为环境变量
-      - name: Extract version number
-        run: echo "VERSION=${{ github.ref_name }}" | sed 's/^v//' >> $GITHUB_ENV
+
 
       # 使用 Nuitka 编译
       - name: Build with Nuitka
