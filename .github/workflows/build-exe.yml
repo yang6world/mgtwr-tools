@@ -36,24 +36,8 @@ jobs:
       # 编译 Python 脚本为独立可执行文件
       - name: Build with Nuitka
         run: |
-          python -m nuitka \
-            --mingw64 \
-            --standalone \
-            --onefile \
-            --show-progress \
-            --show-memory \
-            --output-dir=out \
-            --plugin-enable=pyqt5 \
-            --windows-disable-console \
-            --windows-product-name="多功能数据分析处理工具" \
-            --windows-product-version=${{ env.VERSION }} \
-            --windows-file-version=${{ env.VERSION }} \
-            --windows-company-name="Yserver" \
-            --windows-icon-from-ico=favicon.ico \
-            --include-data-dir=./template=template \
-            --include-data-files=./emoji.jpg=emoji.jpg \
-            --include-data-files=./favicon.ico=favicon.ico \
-            main.py
+          python -m nuitka --mingw64 --standalone --onefile --show-progress --show-memory --output-dir=out --plugin-enable=pyqt5 --windows-disable-console --windows-product-name="多功能数据分析处理工具" --windows-product-version=${{ env.VERSION }} --windows-file-version=${{ env.VERSION }} --windows-company-name="Yserver" --windows-icon-from-ico=favicon.ico --include-data-dir=./template=template --include-data-files=./emoji.jpg=emoji.jpg --include-data-files=./favicon.ico=favicon.ico main.py
+
 
       # 上传构建产物
       - name: Upload Artifact
