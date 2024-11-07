@@ -21,23 +21,38 @@ jobs:
           python-version: '3.11'
           architecture: 'x64'
 
-      # 提取版本号并设置为环境变量
-      - name: Extract version number
-        run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-
       # 安装 Nuitka 和相关依赖
-      - name: Install Nuitka and dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install nuitka
-          pip install pyqt5  # 安装项目所需的依赖项
-
-      # 编译 Python 脚本为独立可执行文件
+      # 使用 Nuitka 编译
       - name: Build with Nuitka
-        run: |
-          python -m nuitka --mingw64 --standalone --onefile --show-progress --show-memory --output-dir=out --plugin-enable=pyqt5 --windows-disable-console --windows-product-name="多功能数据分析处理工具" --windows-product-version=1.0.0.0 --windows-file-version=1.0.0.0 --windows-company-name="Yserver" --windows-icon-from-ico=favicon.ico --include-data-dir=./template=template --include-data-files=./emoji.jpg=emoji.jpg --include-data-files=./favicon.ico=favicon.ico main.py
-
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: main.py  # 修改为你的主脚本文件名
+          onefile: true
+          mingw64: true
+          standalone: true
+          show-progress: true
+          show-memory: true
+          output-dir: out
+          enable-plugins: pyqt5
+          windows-console-mode: disable
+          windows-product-name: "多功能数据分析处理工具"
+          windows-company-name: "Yserver"
+          windows-product-version: 1.0.0.0
+          windows-file-version: 1.0.0.0
+          windows-icon-from-ico: favicon.ico
+          include-data-dir: ./template=template
+          include-data-files: |
+            ./emoji.jpg=emoji.jpg
+            ./favicon.ico=favicon.ico
+          include-qt-plugins: all  # 包含所有 PyQt5 插件
+          noinclude-qt-plugins: ""
+          no_qt_translations: true  # 禁用 Qt 翻译
+          assume-yes-for-downloads: true  # 自动下载 GCC
 
       # 上传构建产物
       - name: Upload Artifact
