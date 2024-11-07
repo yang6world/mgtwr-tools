@@ -40,6 +40,7 @@ jobs:
           plugin-enable: pyqt5
           windows-disable-console: true
           windows-product-name: "多功能数据分析处理工具"
+          windows-product-version: ${{ env.VERSION }}
           windows-file-version: ${{ env.VERSION }}
           windows-company-name: "Yserver"
           windows-icon-from-ico: favicon.ico
