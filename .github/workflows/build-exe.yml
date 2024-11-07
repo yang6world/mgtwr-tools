@@ -51,7 +51,6 @@ jobs:
             ./favicon.ico=favicon.ico
           include-qt-plugins: all  # 包含所有 PyQt5 插件
           noinclude-qt-plugins: ""
-          no_qt_translations: true  # 禁用 Qt 翻译
           assume-yes-for-downloads: true  # 自动下载 GCC
 
       # 上传构建产物
