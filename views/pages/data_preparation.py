@@ -1,12 +1,13 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QFileDialog, QComboBox, QLineEdit, QHBoxLayout, QListWidget, QListWidgetItem, QPushButton)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QFileDialog, QComboBox, QLineEdit, QHBoxLayout, QListWidget,
+                             QListWidgetItem, QPushButton)
 
 from views.components.button import ModernButton
 import pandas as pd
 from utils.urltools import get_resource_path
 from utils.xlsx_tools import (get_province_in_base_table, filter_out_selected_provinces,
-                       generate_year_for_base_table, merge_data_to_base_table,
-                       save_table_to_excel)
+                              generate_year_for_base_table, merge_data_to_base_table,
+                              save_table_to_excel)
 
 
 class DataGenerationPage(QWidget):
