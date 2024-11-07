@@ -3,7 +3,7 @@ name: Build and Release with Nuitka
 on:
   push:
     tags:
-      - 'v*.*.*.*'
+      - 'v*'
 
 jobs:
   build:
