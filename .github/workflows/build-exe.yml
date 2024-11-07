@@ -1,0 +1,88 @@
+name: Build and Release with Nuitka
+
+on:
+  push:
+    tags:
+      - 'v*.*.*.*'
+
+jobs:
+  build:
+    runs-on: windows-latest  # Nuitka 仅支持 Windows
+
+    steps:
+      # 检出代码库
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 设置 Python 3.11 环境
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: 'x64'
+
+      # 使用 Nuitka 编译
+      - name: Build with Nuitka
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: main.py  # 修改为你的主脚本文件名
+          onefile: true
+          nuitka-flags: |
+            --mingw64
+            --standalone
+            --show-progress
+            --show-memory
+            --output-dir=out
+            --plugin-enable=pyqt5
+            --windows-disable-console
+            --windows-product-name=多功能数据分析处理工具
+            --windows-file-version=${{ github.ref_name#v }}
+            --windows-company-name=Yserver
+            --windows-icon-from-ico=favicon.ico
+            --include-data-dir=./template=template
+            --include-data-files=./emoji.jpg=emoji.jpg
+            --include-data-files=./favicon.ico=favicon.ico
+
+      # 上传构建产物
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: exe
+          path: out/main.exe  # 调整为实际生成的文件路径和名称
+          include-hidden-files: true
+
+  release:
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+      # 下载构建产物
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: exe
+          path: out/
+
+      # 创建 GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      # 上传 Release 产物
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: out/main.exe  # 根据实际生成的文件名调整
+          asset_name: my_program.exe
+          asset_content_type: application/octet-stream
