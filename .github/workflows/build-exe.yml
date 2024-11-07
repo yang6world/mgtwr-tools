@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest  # Nuitka 仅支持 Windows
+    runs-on: windows-latest
 
     steps:
       # 检出代码库
@@ -25,30 +25,35 @@ jobs:
       - name: Extract version number
         run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
-      # 使用 Nuitka 编译
+      # 安装 Nuitka 和相关依赖
+      - name: Install Nuitka and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install nuitka
+          pip install pyqt5  # 安装项目所需的依赖项
+
+      # 编译 Python 脚本为独立可执行文件
       - name: Build with Nuitka
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          nuitka-version: main
-          script-name: main.py  # 修改为你的主脚本文件名
-          args: |
-            --onefile
-            --mingw64
-            --standalone
-            --show-progress
-            --show-memory
-            --output-dir=out
-            --plugin-enable=pyqt5
-            --windows-disable-console
-            --windows-product-name="多功能数据分析处理工具"
-            --windows-company-name="Yserver"
-            --windows-product-version=${{ env.VERSION }}
-            --windows-file-version=${{ env.VERSION }}
-            --windows-icon-from-ico=favicon.ico
-            --include-data-dir=./template=template
-            --include-data-files=./emoji.jpg=emoji.jpg
-            --include-data-files=./favicon.ico=favicon.ico
-            --assume-yes-for-downloads
+        run: |
+          python -m nuitka \
+            --mingw64 \
+            --standalone \
+            --onefile \
+            --show-progress \
+            --show-memory \
+            --output-dir=out \
+            --plugin-enable=pyqt5 \
+            --windows-disable-console \
+            --windows-product-name="多功能数据分析处理工具" \
+            --windows-product-version=${{ env.VERSION }} \
+            --windows-file-version=${{ env.VERSION }} \
+            --windows-company-name="Yserver" \
+            --windows-icon-from-ico=favicon.ico \
+            --include-data-dir=./template=template \
+            --include-data-files=./emoji.jpg=emoji.jpg \
+            --include-data-files=./favicon.ico=favicon.ico \
+            main.py
 
       # 上传构建产物
       - name: Upload Artifact
