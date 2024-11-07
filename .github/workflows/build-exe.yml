@@ -48,6 +48,9 @@ jobs:
           windows-file-version: 1.0.0.0
           windows-company-name: "Yserver"
           windows-icon-from-ico: favicon.ico
+          include-qt-plugins: all  # 包含所有 PyQt5 插件
+          noinclude-qt-plugins: ""
+          no_qt_translations: true
           include-data-dir: ./template=template
           include-data-files: |
             ./emoji.jpg=emoji.jpg
