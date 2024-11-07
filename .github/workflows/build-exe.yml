@@ -23,9 +23,6 @@ jobs:
       # 提取版本号并设置为环境变量
       - name: Extract version number
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" | sed 's/^v//' >> $GITHUB_ENV
-      # 输出版本号
-      - name: Output version number
-        run: echo $VERSION
       # Install dependencies
       - name: Install Dependencies
         run: |
@@ -47,8 +44,8 @@ jobs:
           plugin-enable: pyqt5
           windows-disable-console: true
           windows-product-name: "多功能数据分析处理工具"
-          windows-product-version: ${{ env.VERSION }}
-          windows-file-version: ${{ env.VERSION }}
+          windows-product-version: 1.0.0.0
+          windows-file-version: 1.0.0.0
           windows-company-name: "Yserver"
           windows-icon-from-ico: favicon.ico
           include-data-dir: ./template=template
