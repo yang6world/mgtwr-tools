@@ -32,21 +32,21 @@ jobs:
           nuitka-version: main
           script-name: main.py  # 修改为你的主脚本文件名
           onefile: true
-          nuitka-flags: |
-            --mingw64
-            --standalone
-            --show-progress
-            --show-memory
-            --output-dir=out
-            --plugin-enable=pyqt5
-            --windows-disable-console
-            --windows-product-name=多功能数据分析处理工具
-            --windows-file-version=${{ env.VERSION }}
-            --windows-company-name=Yserver
-            --windows-icon-from-ico=favicon.ico
-            --include-data-dir=./template=template
-            --include-data-files=./emoji.jpg=emoji.jpg
-            --include-data-files=./favicon.ico=favicon.ico
+          mingw64: true
+          standalone: true
+          show-progress: true
+          show-memory: true
+          output-dir: out
+          plugin-enable: pyqt5
+          windows-disable-console: true
+          windows-product-name: "多功能数据分析处理工具"
+          windows-file-version: ${{ env.VERSION }}
+          windows-company-name: "Yserver"
+          windows-icon-from-ico: favicon.ico
+          include-data-dir: ./template=template
+          include-data-files: |
+            ./emoji.jpg=emoji.jpg
+            ./favicon.ico=favicon.ico
 
       # 上传构建产物
       - name: Upload Artifact
